@@ -9,6 +9,7 @@ License: MIT, copied in `LICENSE`
 Vendored files:
 
 - `three.module.js`
+- `three.core.js`
 - `examples/jsm/controls/OrbitControls.js`
 - `examples/jsm/loaders/STLLoader.js`
 - `examples/jsm/loaders/OBJLoader.js`

@@ -1,5 +1,7 @@
 import io
 import json
+import re
+from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import quote, urlparse
 
@@ -66,6 +68,7 @@ def test_three_vendor_bundle_is_self_hosted_and_pinned():
 
     for path in [
         "static/vendor/three/0.184.0/three.module.js",
+        "static/vendor/three/0.184.0/three.core.js",
         "static/vendor/three/0.184.0/examples/jsm/controls/OrbitControls.js",
         "static/vendor/three/0.184.0/examples/jsm/loaders/STLLoader.js",
         "static/vendor/three/0.184.0/examples/jsm/loaders/OBJLoader.js",
@@ -74,6 +77,15 @@ def test_three_vendor_bundle_is_self_hosted_and_pinned():
         "static/vendor/three/0.184.0/examples/jsm/loaders/3MFLoader.js",
     ]:
         assert _read(path), f"{path} must be vendored"
+
+
+def test_three_vendor_relative_imports_are_present():
+    root = Path("static/vendor/three/0.184.0")
+    for module_path in [root / "three.module.js", root / "three.core.js"]:
+        source = module_path.read_text(encoding="utf-8")
+        for rel in re.findall(r"from ['\"](\./[^'\"]+)['\"]", source):
+            target = (module_path.parent / rel).resolve()
+            assert target.exists(), f"{module_path} imports missing vendored module {rel}"
 
 
 def test_3d_scripts_load_in_preview_order():
