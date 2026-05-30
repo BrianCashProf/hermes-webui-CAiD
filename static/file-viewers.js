@@ -35,6 +35,7 @@
     if(idx>=0) viewers.splice(idx,1,normalized);
     else viewers.push(normalized);
     viewers.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.id.localeCompare(b.id));
+    window.dispatchEvent(new CustomEvent('HermesFileViewerRegistered',{detail:{id:normalized.id}}));
     return normalized;
   }
 

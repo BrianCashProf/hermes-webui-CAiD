@@ -7,6 +7,7 @@ function assistantDisplayName(){
 const INFLIGHT={};  // keyed by session_id while request in-flight
 const SESSION_QUEUES={};  // keyed by session_id for queued follow-up turns
 const MAX_UPLOAD_BYTES=(window.__HERMES_CONFIG__&&window.__HERMES_CONFIG__.maxUploadBytes)||20*1024*1024;
+const MAX_3D_UPLOAD_BYTES=(window.__HERMES_CONFIG__&&window.__HERMES_CONFIG__.max3dBytes)||MAX_UPLOAD_BYTES;
 const MAX_UPLOAD_MB=Math.round(MAX_UPLOAD_BYTES/1024/1024);
 // Tracks which session's queue to drain in setBusy(false).
 // Set to activeSid just before setBusy(false) in done/error handlers so the
@@ -725,7 +726,7 @@ function _renderAttachmentHtml(fname, url){
 function openAttachment3d(fname){
   if(!fname||!S.session) return;
   if(typeof openWorkspacePanel==='function') openWorkspacePanel('preview');
-  if(typeof openFile==='function') void openFile(fname);
+  if(typeof openFile==='function') void openFile(fname,{forceViewer:true});
 }
 document.addEventListener('click', e => {
   const btn=e.target&&e.target.closest?e.target.closest('[data-open-3d-attachment]'):null;
@@ -8800,9 +8801,16 @@ function renderTray(){ // non-media files use paperclip chip
     tray.appendChild(chip);
   });
 }
+
+function _uploadLimitBytesForFile(file){
+  const name=String(file&&file.name||'');
+  return _MODEL_3D_EXTS.test(name)?Math.max(MAX_UPLOAD_BYTES,MAX_3D_UPLOAD_BYTES):MAX_UPLOAD_BYTES;
+}
+
 function _uploadTooLargeMessage(file){
+  const limitMb=Math.round(_uploadLimitBytesForFile(file)/1024/1024);
   const fileSizeMb=Math.ceil(((file&&file.size)||0)/1024/1024);
-  return t('upload_too_large',MAX_UPLOAD_MB,fileSizeMb);
+  return t('upload_too_large',limitMb,fileSizeMb);
 }
 function _showUploadTooLarge(file){
   const message=`${t('upload_failed')}${file&&file.name?file.name:'file'} \u2014 ${_uploadTooLargeMessage(file)}`;
@@ -8811,7 +8819,7 @@ function _showUploadTooLarge(file){
 }
 function addFiles(files){
   for(const f of files){
-    if(f&&f.size>MAX_UPLOAD_BYTES){_showUploadTooLarge(f);continue;}
+    if(f&&f.size>MAX_UPLOAD_BYTES&&f.size>_uploadLimitBytesForFile(f)){_showUploadTooLarge(f);continue;}
     if(!S.pendingFiles.find(p=>p.name===f.name))S.pendingFiles.push(f);
   }
   renderTray();
@@ -8825,12 +8833,14 @@ async function uploadPendingFiles(){
   for(let i=0;i<total;i++){
     const f=S.pendingFiles[i];
     try{
-      if(f&&f.size>MAX_UPLOAD_BYTES)throw new Error(_uploadTooLargeMessage(f));
+      if(f&&f.size>MAX_UPLOAD_BYTES&&f.size>_uploadLimitBytesForFile(f))throw new Error(_uploadTooLargeMessage(f));
       const fd=new FormData();
       fd.append('session_id',S.session.session_id);fd.append('file',f,f.name);
       const isArchive=_ARCHIVE_EXTS.test(f.name);
-      const url=new URL(isArchive?'api/upload/extract':'api/upload',document.baseURI||location.href).href;
-      const res=await fetch(url,{method:'POST',credentials:'include',body:fd});
+      const is3dModel=_MODEL_3D_EXTS.test(f.name);
+      const url=new URL(isArchive?'api/upload/extract':'api/upload',document.baseURI||location.href);
+      if(is3dModel) url.searchParams.set('viewer_type','3d');
+      const res=await fetch(url.href,{method:'POST',credentials:'include',body:fd});
       if(_redirectIfUnauth(res)) return;
       if(!res.ok){const err=await res.text();throw new Error(err);}
       const data=await res.json();

@@ -7,13 +7,38 @@ import re as _re
 import email.parser
 import tempfile
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
-from api.config import MAX_UPLOAD_BYTES, STATE_DIR
+from api.config import MAX_3D_VIEWER_BYTES, MAX_UPLOAD_BYTES, MODEL_3D_EXTS, STATE_DIR
 from api.helpers import j, bad
 from api.models import get_session
 from api.workspace import safe_resolve_ws
 
 _MAX_EXTRACTED_BYTES = 10 * MAX_UPLOAD_BYTES
+
+
+def _is_3d_upload_name(filename: str) -> bool:
+    return Path(str(filename or "")).suffix.lower() in MODEL_3D_EXTS
+
+
+def _request_wants_3d_upload(handler) -> bool:
+    try:
+        qs = parse_qs(urlparse(getattr(handler, "path", "") or "").query)
+    except Exception:
+        return False
+    return str(qs.get("viewer_type", [""])[0]).lower() == "3d"
+
+
+def _upload_request_limit(handler) -> int:
+    if _request_wants_3d_upload(handler):
+        return max(MAX_UPLOAD_BYTES, MAX_3D_VIEWER_BYTES)
+    return MAX_UPLOAD_BYTES
+
+
+def _upload_file_limit(filename: str) -> int:
+    if _is_3d_upload_name(filename):
+        return max(MAX_UPLOAD_BYTES, MAX_3D_VIEWER_BYTES)
+    return MAX_UPLOAD_BYTES
 
 
 def parse_multipart(rfile, content_type, content_length) -> tuple:
@@ -107,8 +132,9 @@ def handle_upload(handler):
     try:
         content_type = handler.headers.get('Content-Type', '')
         content_length = int(handler.headers.get('Content-Length', 0) or 0)
-        if content_length > MAX_UPLOAD_BYTES:
-            return j(handler, {'error': f'File too large (max {MAX_UPLOAD_BYTES//1024//1024}MB)'}, status=413)
+        request_limit = _upload_request_limit(handler)
+        if content_length > request_limit:
+            return j(handler, {'error': f'File too large (max {request_limit//1024//1024}MB)'}, status=413)
         fields, files = parse_multipart(handler.rfile, content_type, content_length)
         session_id = fields.get('session_id', '')
         if 'file' not in files:
@@ -116,6 +142,9 @@ def handle_upload(handler):
         filename, file_bytes = files['file']
         if not filename:
             return j(handler, {'error': 'No filename in upload'}, status=400)
+        file_limit = _upload_file_limit(filename)
+        if len(file_bytes) > file_limit:
+            return j(handler, {'error': f'File too large (max {file_limit//1024//1024}MB)'}, status=413)
         try:
             s = get_session(session_id)
         except KeyError:

@@ -633,6 +633,7 @@ function registerViewer(){
     open,
     dispose,
   });
+  window.dispatchEvent(new Event('Hermes3DReady'));
   return true;
 }
 if(!registerViewer()){

@@ -106,6 +106,8 @@ def test_upload_accept_and_workspace_preview_route_3d_extensions():
     assert "disposeActive" in boot
     assert "_MODEL_3D_EXTS" in ui
     assert "data-open-3d-attachment" in ui
+    assert "openFile(fname,{forceViewer:true})" in ui
+    assert "_waitForRegisteredFileViewer" in workspace
 
 
 def test_viewer_registry_and_3d_tool_interfaces_are_exposed():
@@ -116,6 +118,8 @@ def test_viewer_registry_and_3d_tool_interfaces_are_exposed():
         assert needle in registry
     assert "window.HermesFileViewers" in registry
     assert "window.dispatchEvent(new Event('HermesFileViewersReady'))" in registry
+    assert "HermesFileViewerRegistered" in registry
+    assert "Hermes3DReady" in viewer
     assert "window.Hermes3D" in viewer
     assert "registerTool(tool)" in viewer
     assert "hermes-3d-tabs:" in viewer
@@ -125,6 +129,31 @@ def test_viewer_registry_and_3d_tool_interfaces_are_exposed():
     assert "loadMtlMaterials" in viewer
     assert "api/file/" in viewer
     assert "/api/file/raw" in viewer or "api/file/raw" in viewer
+
+
+def test_3d_uploads_can_use_viewer_size_cap():
+    ui = _read("static/ui.js")
+    upload_src = _read("api/upload.py")
+
+    assert "MAX_3D_UPLOAD_BYTES" in ui
+    assert "_uploadLimitBytesForFile" in ui
+    assert "url.searchParams.set('viewer_type','3d')" in ui
+    assert "MAX_3D_VIEWER_BYTES" in upload_src
+    assert "_upload_request_limit" in upload_src
+    assert "_upload_file_limit" in upload_src
+
+
+def test_backend_3d_upload_limit_uses_viewer_cap():
+    from api import upload
+    from api.config import MAX_3D_VIEWER_BYTES, MAX_UPLOAD_BYTES
+
+    normal = SimpleNamespace(path="/api/upload")
+    model = SimpleNamespace(path="/api/upload?viewer_type=3d")
+
+    assert upload._upload_request_limit(normal) == MAX_UPLOAD_BYTES
+    assert upload._upload_request_limit(model) == max(MAX_UPLOAD_BYTES, MAX_3D_VIEWER_BYTES)
+    assert upload._upload_file_limit("part.txt") == MAX_UPLOAD_BYTES
+    assert upload._upload_file_limit("part.stl") == max(MAX_UPLOAD_BYTES, MAX_3D_VIEWER_BYTES)
 
 
 def test_backend_mime_map_and_file_info_metadata(tmp_path, monkeypatch):

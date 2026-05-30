@@ -352,8 +352,9 @@ Full list of environment variables:
 | `HERMES_WEBUI_STATE_DIR` | `$HERMES_HOME/webui` (Windows default `%LOCALAPPDATA%\hermes\webui`, POSIX default `~/.hermes/webui`) | Where sessions and state are stored |
 | `HERMES_WEBUI_DEFAULT_WORKSPACE` | `~/workspace` | Default workspace |
 | `HERMES_WEBUI_DEFAULT_MODEL` | *(provider default)* | Optional model override; leave unset to use the active Hermes provider default |
+| `HERMES_WEBUI_MAX_UPLOAD_MB` | `20` | General chat upload limit in MB |
 | `HERMES_WEBUI_3D_WARN_MB` | `50` | 3D viewer warning threshold in MB |
-| `HERMES_WEBUI_3D_MAX_FILE_MB` | `250` | 3D viewer hard limit in MB |
+| `HERMES_WEBUI_3D_MAX_FILE_MB` | `250` | 3D viewer hard limit in MB; 3D model uploads use this cap unless the general upload cap is higher |
 | `HERMES_WEBUI_PASSWORD` | *(unset)* | Set to enable password authentication |
 | `HERMES_WEBUI_CSP_CONNECT_EXTRA` | *(unset)* | Optional space-separated `http(s)://` or `ws(s)://` origins to append to the report-only CSP `connect-src` directive for reverse-proxy or tunnel deployments |
 | `HERMES_WEBUI_EXTENSION_DIR` | *(unset)* | Optional local directory served at `/extensions/`; must point to an existing directory before extension injection is enabled |
@@ -552,7 +553,7 @@ Production data and real cron jobs are never touched. Current snapshot:
 - Signed HMAC HTTP-only cookie with 24h TTL
 - Minimal dark-themed login page at `/login`
 - Security headers on all responses (X-Content-Type-Options, X-Frame-Options, Referrer-Policy)
-- 20MB POST body size limit
+- Configurable upload size limits; general uploads default to 20 MB, while 3D model uploads default to the 3D viewer cap
 - CDN resources pinned with SRI integrity hashes
 
 ### Themes

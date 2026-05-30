@@ -7,6 +7,14 @@
 
 - Added a self-hosted WebGL 3D file viewer for `.stl`, `.obj`, `.ply`, `.glb`, `.gltf`, and `.3mf` files in the workspace preview panel, with model tabs, camera/tool state persistence, compact viewer controls, 3D attachment affordances, a metadata-only `/api/file/info` endpoint, and a browser-side viewer plugin registry separate from Hermes Agent plugin visibility.
 
+### Changed
+
+- 3D model uploads now use the configured 3D viewer hard limit by default, instead of the general 20 MB chat upload cap.
+
+### Fixed
+
+- Opening a 3D chat attachment now waits for the browser-side 3D viewer registration and no longer falls through to the text/download preview path when the attachment is outside the workspace tree.
+
 ## [v0.51.157] — 2026-05-28 — Release EC (stage-batch39 — 5-PR mixed-risk cleanup: gateway prefill forward + prefill budget + compressed-continuation sidebar + browser-transcript memory guidance + reasoning max parity)
 
 ### Added

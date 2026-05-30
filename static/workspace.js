@@ -493,7 +493,75 @@ function cancelEditMode(){
   updateEditBtn();
 }
 
-async function openFile(path){
+function _fileViewerCtx(path,ext){
+  return {
+    path,ext,session:S.session,sessionId:S.session&&S.session.session_id,
+    container:$('preview3dWrap'),
+    api,
+    rawUrl:(targetPath)=>`api/file/raw?session_id=${encodeURIComponent(S.session.session_id)}&path=${encodeURIComponent(targetPath)}&inline=1`,
+  };
+}
+
+function _canPreviewWithRegisteredViewer(ctx){
+  return !!(window.HermesFileViewers&&window.HermesFileViewers.canPreview(ctx));
+}
+
+async function _waitForRegisteredFileViewer(ctx,timeoutMs=2500){
+  if(_canPreviewWithRegisteredViewer(ctx)) return true;
+  return await new Promise(resolve=>{
+    let done=false;
+    let timer=null;
+    const finish=(ok)=>{
+      if(done) return;
+      done=true;
+      if(timer) clearTimeout(timer);
+      window.removeEventListener('HermesFileViewerRegistered',check);
+      window.removeEventListener('Hermes3DReady',check);
+      window.removeEventListener('HermesFileViewersReady',check);
+      resolve(ok);
+    };
+    const check=()=>finish(_canPreviewWithRegisteredViewer(ctx));
+    window.addEventListener('HermesFileViewerRegistered',check);
+    window.addEventListener('Hermes3DReady',check);
+    window.addEventListener('HermesFileViewersReady',check);
+    timer=setTimeout(()=>finish(_canPreviewWithRegisteredViewer(ctx)),timeoutMs);
+  });
+}
+
+async function _openRegisteredFileViewer(path,ext,opts={}){
+  if(!S.session) return false;
+  const ctx=_fileViewerCtx(path,ext);
+  const wantsViewer=opts.forceViewer||MODEL_3D_EXTS.has(ext);
+  if(!_canPreviewWithRegisteredViewer(ctx)&&wantsViewer){
+    await _waitForRegisteredFileViewer(ctx);
+  }
+  if(!_canPreviewWithRegisteredViewer(ctx)){
+    if(wantsViewer){
+      showPreview('3d');
+      const status=$('preview3dStatus');
+      if(status){
+        status.textContent='The 3D viewer did not finish loading. Refresh the page and try again.';
+        status.dataset.kind='error';
+      }
+      setStatus(t('file_open_failed'));
+      return true;
+    }
+    return false;
+  }
+  showPreview('3d');
+  const status=$('preview3dStatus');
+  if(status){status.textContent='Loading '+(path.split('/').pop()||path)+'...';status.dataset.kind='';}
+  try{
+    await window.HermesFileViewers.open(ctx);
+  }catch(e){
+    const message=e&&e.message?e.message:String(e||t('file_open_failed'));
+    if(status){status.textContent=message;status.dataset.kind='error';}
+    setStatus(t('file_open_failed'));
+  }
+  return true;
+}
+
+async function openFile(path,opts={}){
   if(!S.session)return;
   const ext=fileExt(path);
 
@@ -509,29 +577,7 @@ async function openFile(path){
 
   _previewCurrentPath = path;
   renderFileBreadcrumb(path);
-  if(window.HermesFileViewers&&window.HermesFileViewers.canPreview({
-    path,ext,session:S.session,sessionId:S.session.session_id,
-  })){
-    showPreview('3d');
-    const status=$('preview3dStatus');
-    if(status) status.textContent='Loading '+(path.split('/').pop()||path)+'...';
-    try{
-      await window.HermesFileViewers.open({
-        path,
-        ext,
-        session:S.session,
-        sessionId:S.session.session_id,
-        container:$('preview3dWrap'),
-        api,
-        rawUrl:(targetPath)=>`api/file/raw?session_id=${encodeURIComponent(S.session.session_id)}&path=${encodeURIComponent(targetPath)}&inline=1`,
-      });
-    }catch(e){
-      const message=e&&e.message?e.message:String(e||t('file_open_failed'));
-      if(status){status.textContent=message;status.dataset.kind='error';}
-      setStatus(t('file_open_failed'));
-    }
-    return;
-  }
+  if(await _openRegisteredFileViewer(path,ext,opts)) return;
   if(IMAGE_EXTS.has(ext)){
     // Image: load via raw endpoint, show as <img>
     showPreview('image');
