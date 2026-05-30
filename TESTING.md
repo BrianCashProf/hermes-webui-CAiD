@@ -359,6 +359,20 @@ EXPECT:
   - "Open in browser" opens the same raw file endpoint in a new tab
 FAIL: Browser downloads the PDF immediately, raw binary appears, or the preview panel is blank without an open fallback.
 
+### T5.5d: Preview 3D Model Files Inline
+SETUP: Workspace contains small `.stl`, `.obj`, `.ply`, `.glb`/`.gltf`, and `.3mf` samples. For `.obj`/`.gltf`, include sibling `.mtl`, texture, or `.bin` files when relevant.
+STEPS:
+  1. Click a 3D file in the workspace file tree
+  2. Orbit, pan, zoom, fit, reset, toggle grid/axes/wireframe/material, enable auto-rotate, and take a screenshot
+  3. Open a second 3D file and switch between model tabs
+  4. Resize the workspace panel and repeat on a narrow viewport
+EXPECT:
+  - The file opens in the right-panel WebGL preview instead of downloading
+  - Path badge shows `3d`, the canvas is nonblank, and controls remain responsive
+  - Tabs preserve each model's camera/tool state for the current session
+  - Relative model resources load through `/api/file/raw`; external `http(s)` model resources fail safely
+FAIL: Browser downloads the model immediately, the canvas is blank, tabs lose state, or relative resources attempt external network loads.
+
 ### T5.6: Preview a Markdown File (Sprint 2)
 SETUP: Workspace has a .md file (or create one: upload a file named README.md with some markdown content).
 STEPS:

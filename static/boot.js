@@ -992,6 +992,12 @@ function clearPreview(opts={}){
   const pi=$('previewImg');if(pi){pi.onerror=null;pi.src='';}
   const pdf=$('previewPdfFrame');if(pdf)pdf.src='';
   const html=$('previewHtmlIframe');if(html)html.src='';
+  if(window.HermesFileViewers&&typeof window.HermesFileViewers.disposeActive==='function'){
+    void window.HermesFileViewers.disposeActive();
+  }
+  const three=$('preview3dWrap');if(three)three.style.display='none';
+  const threeHost=$('preview3dCanvasHost');if(threeHost)threeHost.textContent='';
+  const threeStatus=$('preview3dStatus');if(threeStatus){threeStatus.textContent='';threeStatus.dataset.kind='';}
   const pm=$('previewMd');if(pm)pm.innerHTML='';
   const pc=$('previewCode');if(pc)pc.textContent='';
   const pp=$('previewPathText');if(pp)pp.textContent='';

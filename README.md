@@ -352,6 +352,8 @@ Full list of environment variables:
 | `HERMES_WEBUI_STATE_DIR` | `$HERMES_HOME/webui` (Windows default `%LOCALAPPDATA%\hermes\webui`, POSIX default `~/.hermes/webui`) | Where sessions and state are stored |
 | `HERMES_WEBUI_DEFAULT_WORKSPACE` | `~/workspace` | Default workspace |
 | `HERMES_WEBUI_DEFAULT_MODEL` | *(provider default)* | Optional model override; leave unset to use the active Hermes provider default |
+| `HERMES_WEBUI_3D_WARN_MB` | `50` | 3D viewer warning threshold in MB |
+| `HERMES_WEBUI_3D_MAX_FILE_MB` | `250` | 3D viewer hard limit in MB |
 | `HERMES_WEBUI_PASSWORD` | *(unset)* | Set to enable password authentication |
 | `HERMES_WEBUI_CSP_CONNECT_EXTRA` | *(unset)* | Optional space-separated `http(s)://` or `ws(s)://` origins to append to the report-only CSP `connect-src` directive for reverse-proxy or tunnel deployments |
 | `HERMES_WEBUI_EXTENSION_DIR` | *(unset)* | Optional local directory served at `/extensions/`; must point to an existing directory before extension injection is enabled |
@@ -515,6 +517,8 @@ Production data and real cron jobs are never touched. Current snapshot:
 - Directory tree with expand/collapse (single-click toggles, double-click navigates)
 - Breadcrumb navigation with clickable path segments
 - Preview text, code, Markdown (rendered), and images inline
+- Preview `.stl`, `.obj`, `.ply`, `.glb`, `.gltf`, and `.3mf` models in the built-in WebGL 3D viewer
+- 3D viewer assets are vendored with the WebUI; no npm, Node, or frontend build step is required at install time
 - Chat links using `workspace://path/to/file` open files in the right-side preview pane
 - Edit, create, delete, and rename files; create folders
 - Binary file download (auto-detected from server)
@@ -617,6 +621,8 @@ static/
   style.css             All CSS incl. mobile responsive, themes (~3767 lines)
   ui.js                 DOM helpers, renderMd, tool cards, context indicator (~7216 lines)
   workspace.js          File preview, file ops, git badge (~369 lines)
+  file-viewers.js       Browser-side viewer plugin registry
+  three-viewer.js       Built-in Three.js/WebGL 3D model viewer
   sessions.js           Session CRUD, collapsible groups, search, reload recovery (~3517 lines)
   messages.js           send(), SSE handlers, live streaming, session recovery (~2301 lines)
   panels.js             Cron, skills, memory, profiles, settings (~6480 lines)

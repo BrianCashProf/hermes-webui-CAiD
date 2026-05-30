@@ -944,10 +944,13 @@ from api.config import (
     _INDEX_HTML_PATH,
     get_available_models,
     IMAGE_EXTS,
+    MODEL_3D_EXTS,
     MD_EXTS,
     MIME_MAP,
     MAX_FILE_BYTES,
     MAX_UPLOAD_BYTES,
+    MAX_3D_VIEWER_BYTES,
+    WARN_3D_VIEWER_BYTES,
     CHAT_LOCK,
     _get_session_agent_lock,
     SESSION_AGENT_LOCKS,
@@ -3930,6 +3933,8 @@ def handle_get(handler, parsed) -> bool:
                 _INDEX_HTML_PATH.read_text(encoding="utf-8")
                 .replace("__WEBUI_VERSION__", version_token)
                 .replace("__MAX_UPLOAD_BYTES__", str(MAX_UPLOAD_BYTES))
+                .replace("__MAX_3D_VIEWER_WARN_BYTES__", str(WARN_3D_VIEWER_BYTES))
+                .replace("__MAX_3D_VIEWER_BYTES__", str(MAX_3D_VIEWER_BYTES))
                 .replace("__CSRF_TOKEN_JSON__", json.dumps(csrf_token))
             )
             return t(
@@ -4820,6 +4825,9 @@ def handle_get(handler, parsed) -> bool:
 
     if parsed.path == "/api/media":
         return _handle_media(handler, parsed)
+
+    if parsed.path == "/api/file/info":
+        return _handle_file_info(handler, parsed)
 
     if parsed.path == "/api/file/raw":
         return _handle_file_raw(handler, parsed)
@@ -7853,6 +7861,50 @@ def _file_raw_target(session, sid: str, rel: str) -> Path | None:
     if attachment_target.exists() and attachment_target.is_file():
         return attachment_target
     return None
+
+
+def _file_viewer_type_for_ext(ext: str) -> str:
+    if ext in MODEL_3D_EXTS:
+        return "3d"
+    if ext in IMAGE_EXTS:
+        return "image"
+    if ext in MD_EXTS:
+        return "markdown"
+    if ext == ".pdf":
+        return "pdf"
+    return "file"
+
+
+def _handle_file_info(handler, parsed):
+    qs = parse_qs(parsed.query)
+    sid = qs.get("session_id", [""])[0]
+    if not sid:
+        return bad(handler, "session_id is required")
+    try:
+        s = get_session(sid)
+    except KeyError:
+        return bad(handler, "Session not found", 404)
+    rel = qs.get("path", [""])[0]
+    if not rel:
+        return bad(handler, "path is required")
+    target = _file_raw_target(s, sid, rel)
+    if target is None:
+        return j(handler, {"error": "not found"}, status=404)
+    try:
+        size = target.stat().st_size
+    except PermissionError:
+        return bad(handler, "Permission denied", 403)
+    except OSError:
+        return bad(handler, "Could not read file metadata", 500)
+    ext = target.suffix.lower()
+    return j(handler, {
+        "path": rel,
+        "name": target.name,
+        "ext": ext,
+        "mime": MIME_MAP.get(ext, "application/octet-stream"),
+        "size": size,
+        "viewer_type": _file_viewer_type_for_ext(ext),
+    })
 
 
 # ─── /api/folder/download ───────────────────────────────────────────────────

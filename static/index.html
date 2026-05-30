@@ -28,7 +28,7 @@
 <script>(function(){try{if(localStorage.getItem('hermes-webui-sidebar-collapsed')==='1')document.documentElement.dataset.sidebarCollapsed='1';}catch(e){}})()</script>
 <link rel="preload" href="static/pwa-startup.js?v=__WEBUI_VERSION__" as="script">
 <script src="static/pwa-startup.js?v=__WEBUI_VERSION__"></script>
-<script>window.__HERMES_CONFIG__={maxUploadBytes:__MAX_UPLOAD_BYTES__,csrfToken:__CSRF_TOKEN_JSON__};</script>
+<script>window.__HERMES_CONFIG__={maxUploadBytes:__MAX_UPLOAD_BYTES__,max3dWarnBytes:__MAX_3D_VIEWER_WARN_BYTES__,max3dBytes:__MAX_3D_VIEWER_BYTES__,csrfToken:__CSRF_TOKEN_JSON__};</script>
 <script>(function(){
   var cfg=window.__HERMES_CONFIG__||{},token=cfg.csrfToken||'';
   if(!token||!window.fetch)return;
@@ -77,6 +77,14 @@
   <!-- sha384 of smd.min.js @0.2.15: sha384-T6r95ocN9t3W8tUK2Fa6FPaO7bJryyjyW0WCalrUnpgtm2qXr5xcN4vwPYEJ6vHa -->
   <!-- ES module imports do not support the integrity= attribute (W3C limitation);    -->
   <!-- version is pinned in the vendored file path; hash documented above for audit. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./static/vendor/three/0.184.0/three.module.js",
+        "three/addons/": "./static/vendor/three/0.184.0/examples/jsm/"
+      }
+    }
+  </script>
   <script type="module">
     import * as smd from './static/vendor/smd.min.js';
     // SRI verification happens at the ES module level via importmap or SW; pinning version in URL.
@@ -557,7 +565,7 @@
         <textarea id="msg" rows="1" placeholder="Message Hermes…"></textarea>
         <div class="composer-footer">
           <div class="composer-left">
-            <input type="file" id="fileInput" class="file-input-visually-hidden" multiple accept="image/*,text/*,application/pdf,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.md,.py,.js,.ts,.yaml,.yml,.toml,.csv,.sh,.txt,.log,.env,.xls,.xlsx,.doc,.docx,.zip,.tar,.gz,.tgz,.bz2,.xz">
+            <input type="file" id="fileInput" class="file-input-visually-hidden" multiple accept="image/*,text/*,application/pdf,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.md,.py,.js,.ts,.yaml,.yml,.toml,.csv,.sh,.txt,.log,.env,.xls,.xlsx,.doc,.docx,.stl,.obj,.mtl,.ply,.glb,.gltf,.3mf,.bin,.zip,.tar,.gz,.tgz,.bz2,.xz">
             <button type="button" class="icon-btn has-tooltip" id="btnAttach" data-tooltip="Attach files">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
             </button>
@@ -1358,6 +1366,14 @@
       <div class="preview-html-wrap" id="previewHtmlWrap" style="display:none;flex:1;border-radius:8px;overflow:hidden;border:1px solid var(--border2)">
         <iframe id="previewHtmlIframe" style="width:100%;height:100%;border:none;background:#fff" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" title="HTML preview"></iframe>
       </div>
+      <div class="preview-3d-wrap" id="preview3dWrap" style="display:none">
+        <div class="preview-3d-tabs" id="preview3dTabs" role="tablist" aria-label="Open 3D models"></div>
+        <div class="preview-3d-toolbar" id="preview3dToolbar" role="toolbar" aria-label="3D viewer tools"></div>
+        <div class="preview-3d-viewport" id="preview3dViewport">
+          <div class="preview-3d-canvas-host" id="preview3dCanvasHost"></div>
+          <div class="preview-3d-status" id="preview3dStatus" aria-live="polite"></div>
+        </div>
+      </div>
       <textarea id="previewEditArea" style="display:none;flex:1;width:100%;background:var(--code-bg);color:var(--pre-text);border:1px solid var(--border2);border-radius:8px;padding:12px;font-family:'SF Mono',ui-monospace,monospace;font-size:12px;line-height:1.6;resize:none;outline:none" oninput="_previewDirty=true;updateEditBtn()"></textarea>
     </div>
   </aside>
@@ -1404,6 +1420,7 @@
 <script src="static/i18n.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/icons.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/ui.js?v=__WEBUI_VERSION__" defer></script>
+<script src="static/file-viewers.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/workspace.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/terminal.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/sessions.js?v=__WEBUI_VERSION__" defer></script>
@@ -1412,6 +1429,7 @@
 <script src="static/panels.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/onboarding.js?v=__WEBUI_VERSION__" defer></script>
 <script src="static/boot.js?v=__WEBUI_VERSION__" defer></script>
+<script src="static/three-viewer.js?v=__WEBUI_VERSION__" type="module"></script>
 
 <!-- Kanban: create/rename board modal — used for both flows. -->
 <div class="kanban-modal-overlay" id="kanbanBoardModal" hidden onclick="if(event.target===this)closeKanbanBoardModal()">

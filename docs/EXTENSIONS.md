@@ -33,6 +33,39 @@ Extensions cannot, by themselves:
 - change Hermes Agent permissions, models, memory, or tools unless they call
   existing authenticated APIs that already allow those changes
 
+## Viewer plugins versus Hermes Agent plugins
+
+Hermes Agent plugins remain server/agent capabilities and the Settings UI only
+reports their visibility. Browser-side viewer plugins are separate WebUI
+extensions: they run in the page and can register file preview handlers or 3D
+toolbar actions without changing agent plugin state.
+
+The built-in registry is available as `window.HermesFileViewers`:
+
+```javascript
+window.HermesFileViewers.register({
+  id: 'my-viewer',
+  label: 'My viewer',
+  extensions: ['.example'],
+  priority: 10,
+  canPreview(ctx) { return true; },
+  open(ctx) { /* render into the active preview surface */ },
+  dispose(ctx) { /* release listeners, URLs, WebGL objects, etc. */ },
+});
+```
+
+The built-in 3D viewer also exposes a small tool hook:
+
+```javascript
+window.Hermes3D.registerTool({
+  id: 'measure',
+  label: 'Measure',
+  icon: 'M',
+  isActive(ctx) { return false; },
+  run(ctx) { /* use ctx.THREE, ctx.scene, ctx.camera, ctx.object */ },
+});
+```
+
 ## Configuration
 
 Extensions are disabled by default. Configure them with environment variables

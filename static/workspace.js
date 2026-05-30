@@ -366,6 +366,7 @@ const HTML_EXTS   = new Set(['.html','.htm']);
 const PDF_EXTS    = new Set(['.pdf']);
 const AUDIO_EXTS  = new Set(['.mp3','.wav','.m4a','.aac','.ogg','.oga','.opus','.flac']);
 const VIDEO_EXTS  = new Set(['.mp4','.mov','.m4v','.webm','.ogv','.avi','.mkv']);
+const MODEL_3D_EXTS = new Set(['.stl','.obj','.ply','.glb','.gltf','.3mf']);
 const MD_PREVIEW_RICH_RENDER_MAX_BYTES = 64 * 1024;
 const MD_PREVIEW_RICH_RENDER_MAX_LINES = 1500;
 // Binary formats that should download rather than preview
@@ -405,21 +406,25 @@ function largeMarkdownPlainTextStatus(content){
 }
 
 let _previewCurrentPath = '';  // relative path of currently previewed file
-let _previewCurrentMode = '';  // 'code' | 'md' | 'image' | 'html' | 'pdf' | 'audio' | 'video'
+let _previewCurrentMode = '';  // 'code' | 'md' | 'image' | 'html' | 'pdf' | 'audio' | 'video' | '3d'
 let _previewDirty = false;     // true when edits are unsaved
 
 function showPreview(mode){
-  // mode: 'code' | 'image' | 'md' | 'html' | 'pdf' | 'audio' | 'video'
+  // mode: 'code' | 'image' | 'md' | 'html' | 'pdf' | 'audio' | 'video' | '3d'
+  if(mode!=='3d'&&window.HermesFileViewers&&typeof window.HermesFileViewers.disposeActive==='function'){
+    void window.HermesFileViewers.disposeActive();
+  }
   $('previewCode').style.display     = mode==='code'  ? '' : 'none';
   $('previewImgWrap').style.display  = mode==='image' ? '' : 'none';
   const mediaWrap=$('previewMediaWrap'); if(mediaWrap) mediaWrap.style.display = (mode==='audio'||mode==='video') ? '' : 'none';
   const pdfWrap=$('previewPdfWrap'); if(pdfWrap) pdfWrap.style.display = mode==='pdf' ? '' : 'none';
   $('previewMd').style.display       = mode==='md'    ? '' : 'none';
   $('previewHtmlWrap').style.display = mode==='html'  ? '' : 'none';
+  const threeWrap=$('preview3dWrap'); if(threeWrap) threeWrap.style.display = mode==='3d' ? '' : 'none';
   $('previewEditArea').style.display = 'none';  // start in read-only
   const badge=$('previewBadge');
-  badge.className='preview-badge '+mode;
-  badge.textContent = mode==='image'?'image':mode==='audio'?'audio':mode==='video'?'video':mode==='pdf'?'pdf':mode==='md'?'md':mode==='html'?'html':fileExt($('previewPathText').textContent)||'text';
+  badge.className='preview-badge '+(mode==='3d'?'model-3d':mode);
+  badge.textContent = mode==='3d'?'3d':mode==='image'?'image':mode==='audio'?'audio':mode==='video'?'video':mode==='pdf'?'pdf':mode==='md'?'md':mode==='html'?'html':fileExt($('previewPathText').textContent)||'text';
   _previewCurrentMode = mode;
   _previewDirty = false;
   updateEditBtn();
@@ -504,6 +509,29 @@ async function openFile(path){
 
   _previewCurrentPath = path;
   renderFileBreadcrumb(path);
+  if(window.HermesFileViewers&&window.HermesFileViewers.canPreview({
+    path,ext,session:S.session,sessionId:S.session.session_id,
+  })){
+    showPreview('3d');
+    const status=$('preview3dStatus');
+    if(status) status.textContent='Loading '+(path.split('/').pop()||path)+'...';
+    try{
+      await window.HermesFileViewers.open({
+        path,
+        ext,
+        session:S.session,
+        sessionId:S.session.session_id,
+        container:$('preview3dWrap'),
+        api,
+        rawUrl:(targetPath)=>`api/file/raw?session_id=${encodeURIComponent(S.session.session_id)}&path=${encodeURIComponent(targetPath)}&inline=1`,
+      });
+    }catch(e){
+      const message=e&&e.message?e.message:String(e||t('file_open_failed'));
+      if(status){status.textContent=message;status.dataset.kind='error';}
+      setStatus(t('file_open_failed'));
+    }
+    return;
+  }
   if(IMAGE_EXTS.has(ext)){
     // Image: load via raw endpoint, show as <img>
     showPreview('image');

@@ -30,8 +30,13 @@ and `static/boot.js` keeps the dataset synchronized with the runtime panel state
 
 The design philosophy is deliberately minimal. There is no build step, no bundler, no
 frontend framework. The Python server is split into a routing shell (server.py) and
-business logic modules (api/). The frontend is seven vanilla JS modules loaded from static/.
+business logic modules (api/). The frontend is vanilla JS modules loaded from static/.
 This makes the code easy to modify from a terminal or by an agent.
+
+The right-panel preview surface can be extended by browser-side file viewers. The
+built-in 3D viewer is registered by `static/three-viewer.js` through
+`static/file-viewers.js`, using vendored Three.js modules under `static/vendor/three/`
+so WebGL previews stay self-hosted without npm or a frontend build step.
 
 Hermes-level chrome is intentionally consolidated: the sidebar has no dedicated brand header.
 Instead, the footer exposes a single "Hermes WebUI" launch button that opens one tabbed
@@ -68,6 +73,8 @@ actions. The topbar remains focused on conversation context and the workspace/fi
       style.css            All CSS incl. mobile responsive (~3767 lines)
       ui.js                DOM helpers, renderMd, tool cards, model dropdown, file tree (~7216 lines)
       workspace.js         File preview, file ops, loadDir, clearPreview (~369 lines)
+      file-viewers.js      Browser-side file viewer registry for preview plugins.
+      three-viewer.js      Built-in WebGL/Three.js viewer for STL/OBJ/PLY/GLB/GLTF/3MF.
       sessions.js          Session CRUD, list rendering, search, SVG icons, dropdown actions (~3517 lines)
       messages.js          send(), SSE event handlers, approval, transcript (~2301 lines)
       panels.js            Cron, skills, memory, workspace, profiles, todo, settings (~6480 lines)
@@ -118,6 +125,8 @@ Environment variables controlling behavior:
     HERMES_WEBUI_PORT              Port (default: 8787)
     HERMES_WEBUI_DEFAULT_WORKSPACE Default workspace path for new sessions
     HERMES_WEBUI_STATE_DIR         Where sessions/ folder lives
+    HERMES_WEBUI_3D_WARN_MB        3D viewer warning threshold in MB (default 50)
+    HERMES_WEBUI_3D_MAX_FILE_MB    3D viewer hard file-size limit in MB (default 250)
     HERMES_CONFIG_PATH             Path to ~/.hermes/config.yaml
     HERMES_WEBUI_DEFAULT_MODEL     Optional model override; unset means provider default
     HERMES_WEBUI_PASSWORD          Optional: enable password auth (off by default)
@@ -1292,6 +1301,7 @@ Complete list of all HTTP endpoints as of Sprint 1 (v0.3).
     /api/sessions              List of all session compact() dicts, sorted by updated_at
     /api/list                  ?session_id=X&path=. -> directory listing for session workspace
     /api/file                  ?session_id=X&path=rel -> file content (text, 200KB limit)
+    /api/file/info             ?session_id=X&path=rel -> metadata only; no file bytes
     /api/chat/stream           ?stream_id=X -> SSE stream. Long-lived. Emits token/tool/
                                approval/done/error events.
     /api/chat/stream/status    ?stream_id=X -> {"active": true/false, "stream_id": X}

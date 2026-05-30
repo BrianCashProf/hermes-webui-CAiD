@@ -538,9 +538,15 @@ def verify_hermes_imports() -> tuple:
 # ── Limits ───────────────────────────────────────────────────────────────────
 MAX_FILE_BYTES = 200_000
 MAX_UPLOAD_BYTES = _env_mb_bytes("HERMES_WEBUI_MAX_UPLOAD_MB", 20)
+MAX_3D_VIEWER_BYTES = _env_mb_bytes("HERMES_WEBUI_3D_MAX_FILE_MB", 250)
+WARN_3D_VIEWER_BYTES = min(
+    _env_mb_bytes("HERMES_WEBUI_3D_WARN_MB", 50),
+    MAX_3D_VIEWER_BYTES,
+)
 
 # ── File type maps ───────────────────────────────────────────────────────────
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".bmp"}
+MODEL_3D_EXTS = {".stl", ".obj", ".ply", ".glb", ".gltf", ".3mf"}
 MD_EXTS = {".md", ".markdown", ".mdown"}
 CODE_EXTS = {
     ".py",
@@ -599,6 +605,14 @@ MIME_MAP = {
     ".m4v": "video/mp4",
     ".webm": "video/webm",
     ".ogv": "video/ogg",
+    ".stl": "model/stl",
+    ".obj": "model/obj",
+    ".mtl": "text/plain",
+    ".ply": "model/ply",
+    ".glb": "model/gltf-binary",
+    ".gltf": "model/gltf+json",
+    ".3mf": "model/3mf",
+    ".bin": "application/octet-stream",
 }
 
 # ── Toolsets (from config.yaml or hardcoded default) ─────────────────────────

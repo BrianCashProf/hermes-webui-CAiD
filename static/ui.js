@@ -659,6 +659,7 @@ const _ARCHIVE_EXTS=/\.(zip|tar|tar\.gz|tgz|tar\.bz2|tbz2|tar\.xz|txz)$/i;
 const _SVG_EXTS=/\.svg$/i;
 const _AUDIO_EXTS=/\.(mp3|ogg|wav|m4a|aac|flac|wma|opus|webm|oga)$/i;
 const _VIDEO_EXTS=/\.(mp4|webm|mkv|mov|avi|ogv|m4v)$/i;
+const _MODEL_3D_EXTS=/\.(stl|obj|ply|glb|gltf|3mf)$/i;
 const _CSV_EXTS=/\.csv$/i;
 const _EXCALIDRAW_EXTS=/\.excalidraw$/i;
 // ── Media playback speed controls ─────────────────────────────────────────
@@ -712,12 +713,26 @@ function _renderAttachmentHtml(fname, url){
   const kind=_mediaKindForName(fname);
   if(kind==='image') return `<img class="msg-media-img" src="${esc(url)}" alt="${esc(fname)}" loading="lazy">`;
   if(kind==='audio'||kind==='video') return _mediaPlayerHtml(kind,url,fname);
+  if(_MODEL_3D_EXTS.test(fname)){
+    return `<button type="button" class="msg-file-badge msg-file-badge--3d" data-open-3d-attachment="${esc(fname)}">${li('box',12)} <span>${esc(fname)}</span><span class="msg-file-badge-action">Open in 3D</span></button>`;
+  }
   if(_HTML_EXTS.test(fname)){
     const inlineUrl=url+(String(url).includes('?')?'&':'?')+'inline=1';
     return `<a class="msg-file-badge msg-file-badge--html" href="${esc(inlineUrl)}" target="_blank" rel="noopener">${li('file-code',12)} ${esc(fname)}</a>`;
   }
   return `<div class="msg-file-badge">${li('paperclip',12)} ${esc(fname)}</div>`;
 }
+function openAttachment3d(fname){
+  if(!fname||!S.session) return;
+  if(typeof openWorkspacePanel==='function') openWorkspacePanel('preview');
+  if(typeof openFile==='function') void openFile(fname);
+}
+document.addEventListener('click', e => {
+  const btn=e.target&&e.target.closest?e.target.closest('[data-open-3d-attachment]'):null;
+  if(!btn) return;
+  e.preventDefault();
+  openAttachment3d(btn.getAttribute('data-open-3d-attachment')||'');
+});
 document.addEventListener('click', e => {
   const btn=e.target&&e.target.closest?e.target.closest('.media-speed-btn'):null;
   if(!btn) return;
@@ -8031,6 +8046,7 @@ function fileIcon(name, type){
   if(type==='dir') return li('folder',14);
   const e=fileExt(name);
   if(IMAGE_EXTS.has(e)) return li('image',14);
+  if(_MODEL_3D_EXTS.test(name)) return li('box',14);
   if(MD_EXTS.has(e))    return li('file-text',14);
   if(typeof DOWNLOAD_EXTS!=='undefined'&&DOWNLOAD_EXTS.has(e)) return li('download',14);
   if(e==='.py')   return li('file-code',14);

@@ -1322,6 +1322,10 @@
   .msg-body .katex-display{margin:8px 0;}
   .msg-files{display:flex;flex-wrap:wrap;gap:6px;padding-left:30px;margin-bottom:10px;}
   .msg-file-badge{display:flex;align-items:center;gap:5px;background:var(--accent-bg);border:1px solid var(--accent-bg-strong);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--accent-text);}
+  button.msg-file-badge{font:inherit;cursor:pointer;}
+  button.msg-file-badge:hover{background:var(--accent-bg-strong);}
+  .msg-file-badge--3d{gap:7px;}
+  .msg-file-badge-action{font-size:11px;color:var(--muted);border-left:1px solid var(--border2);padding-left:7px;}
   /* MEDIA: inline image rendering (feat #450) */
   .msg-media-img{display:inline-block;width:120px;height:90px;border-radius:6px;margin:3px 4px 3px 0;cursor:zoom-in;object-fit:cover;border:1px solid var(--border);vertical-align:bottom;transition:opacity .15s;}
   .msg-media-img:hover{opacity:.85;}
@@ -1741,6 +1745,26 @@
   .preview-media-wrap .msg-media-video{max-height:60vh;}
   .preview-pdf-wrap{display:flex;flex:1;min-height:360px;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:#fff;}
   .preview-pdf-frame{width:100%;height:100%;min-height:70vh;border:none;background:#fff;}
+  .preview-3d-wrap{display:flex;flex-direction:column;gap:8px;flex:1;min-height:360px;overflow:hidden;}
+  .preview-3d-tabs{display:flex;align-items:center;gap:6px;min-height:28px;overflow-x:auto;overflow-y:hidden;padding-bottom:2px;flex-shrink:0;}
+  .preview-3d-tab{display:inline-flex;align-items:center;gap:6px;max-width:180px;height:26px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);border-radius:6px;padding:0 7px;font-size:11px;line-height:1;cursor:pointer;white-space:nowrap;flex:0 0 auto;}
+  .preview-3d-tab span:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .preview-3d-tab.active{background:var(--accent-bg);border-color:var(--accent-bg-strong);color:var(--accent-text);}
+  .preview-3d-tab-close{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;color:var(--muted);font-weight:700;line-height:1;}
+  .preview-3d-tab-close:hover{background:var(--hover-bg);color:var(--text);}
+  .preview-3d-toolbar{display:flex;align-items:center;gap:4px;min-height:30px;flex-wrap:wrap;flex-shrink:0;}
+  .preview-3d-tool{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--muted);cursor:pointer;padding:0;}
+  .preview-3d-tool:hover{background:var(--hover-bg);color:var(--text);}
+  .preview-3d-tool.active{background:var(--accent-bg);border-color:var(--accent-bg-strong);color:var(--accent-text);}
+  .preview-3d-toolbar-sep{width:1px;height:18px;background:var(--border2);margin:0 4px;}
+  .preview-3d-custom-tools{display:inline-flex;align-items:center;gap:4px;}
+  .preview-3d-viewport{position:relative;flex:1;min-height:320px;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:#0f1117;}
+  .preview-3d-canvas-host{position:absolute;inset:0;}
+  .preview-3d-canvas-host canvas{display:block;width:100%;height:100%;outline:none;}
+  .preview-3d-status{position:absolute;left:10px;right:10px;bottom:10px;min-height:18px;padding:5px 8px;border-radius:6px;background:rgba(15,17,23,.74);color:#dbe4ef;font-size:11px;line-height:1.35;pointer-events:none;}
+  .preview-3d-status:empty{display:none;}
+  .preview-3d-status[data-kind="warn"]{color:#fbbf24;}
+  .preview-3d-status[data-kind="error"]{color:#fca5a5;}
   /* Markdown rendered preview */
   .preview-md{font-size:13px;line-height:1.7;color:var(--text);flex:1;overflow-y:auto;min-height:0;}
   .preview-md p{margin-bottom:10px;}.preview-md p:last-child{margin-bottom:0;}
@@ -1773,6 +1797,7 @@
   /* File type badge in preview path bar */
   .preview-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;margin-left:8px;text-transform:uppercase;letter-spacing:.06em;}
   .preview-badge.img,.preview-badge.image,.preview-badge.audio,.preview-badge.video{background:var(--accent-bg);color:var(--accent-text);}
+  .preview-badge.model-3d{background:rgba(45,212,191,.14);color:#5eead4;}
   .preview-badge.pdf{background:rgba(239,68,68,.12);color:#f87171;}
   .preview-badge.md{background:var(--accent-bg-strong);color:var(--accent-text);}
   .preview-badge.code{background:var(--hover-bg);color:var(--muted);}
